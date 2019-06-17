@@ -26,19 +26,27 @@ app.set("view engine", "handlebars");
 // ROUTES
 
 app.get("/scrape", function(req, res) {
-    
-    axios.get("http://www.avclub.com/").then(function(response) {
-      
+
+    axios.get("http://old.reddit.com/").then(function(response) {
+
         var $ = cheerio.load(response.data);
 
-        $("article").each(function(i, element) {
+        $("div.thing").each(function(i, element) {
             
             var result = {};
+            // result.image =   var srcset = $(this).children(".sc-1mg39mc-3").find("img").attr("srcSet");
+            // result.title =   $(this).children(".sc-1mg39mc-4").find("h1").text();
+            // result.summary = $(this).children(".sc-1mg39mc-2").find("p").text();
+            // result.link =    $(this).children(".sc-1mg39mc-4").children("a").attr("href");
 
-            result.image =   $(this).children(".sc-1mg39mc-3").children("img").attr("src");
-            result.title =   $(this).children(".sc-1mg39mc-4").children("h1").text();
-            result.summary = $(this).children(".sc-1mg39mc-2").children("p").text();
-            result.link =    $(this).children(".sc-1mg39mc-4").children("a").attr("href");
+            result.image =   $(this).children("a").find("img").attr("src");
+            result.title =   $(this).children("div.entry").find("a.title").text();
+            result.summary = $(this).children("div.entry").find("p.tagline").text();
+            result.link =    $(this).children("a").attr("href");
+
+            if (!result.image) {
+                result.image = "https://cdn4.iconfinder.com/data/icons/social-messaging-ui-color-shapes-2-free/128/social-reddit-square2-512.png";
+            }
     
             // Create a new Article
             db.Article.create(result)
@@ -51,6 +59,40 @@ app.get("/scrape", function(req, res) {
         });
 
         res.send("Scrape Complete");
+    });
+});
+
+app.get("/articles", function(req, res) {
+    db.Article.find({})
+    .then(function(dbArticle) {
+        res.json(dbArticle);
+    })
+    .catch(function(err) {
+        res.json(err);
+    });
+});
+
+app.get("/articles/:id", function(req, res) {
+    db.Article.findOne({_id: req.params.id})
+      .populate("comment")
+      .then(function(dbArticle){
+        res.json(dbArticle)
+      })
+      .catch(function(err){
+        res.json(err)
+      })
+  });
+
+app.post("/articles/:id", function(req, res) {
+    db.Comment.create(req.body)
+    .then(function(dbComment) {
+        return db.Article.findOneAndUpdate({ _id: req.params.id }, { comment: dbComment._id }, { new: true });
+    })
+    .then(function(dbArticle) {
+        res.json(dbArticle);
+    })
+    .catch(function(err) {
+        res.json(err);
     });
 });
   

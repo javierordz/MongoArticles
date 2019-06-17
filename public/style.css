@@ -1,0 +1,21 @@
+.card {
+    margin: 7px;
+    width: 32%;
+    padding: 15px;
+    display: inline-flex;
+    background: royalblue;
+}
+
+.card-img {
+    width: 140px;
+}
+
+h3 {
+    font-size: 2em;
+    word-break: normal;
+}
+
+a {
+    word-break: normal;
+    color: skyblue;
+}
